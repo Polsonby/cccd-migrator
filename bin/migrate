@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/migrator'
+
+def options
+  @options ||= Migrator::OptParser.parse(ARGV)
+end
+
+def continue_prompt
+  printf "\e[33mContinue? [no/yes]\e[0m:"
+  response = STDIN.gets.chomp
+  exit unless response.match?(/[y|yes]/i)
+end
+
+# binding.pry
+# entrypoint
+puts "Migrating using options: #{ options.to_h.map { |k, v| "\t - #{k}: #{v} " }.join("\n").prepend("\n") }"
+continue_prompt
+puts 'migrating...'

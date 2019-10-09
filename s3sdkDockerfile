@@ -1,0 +1,50 @@
+FROM ruby:2.6.4-alpine3.10
+MAINTAINER Ministry of Justice, Claim for crown court defence <crowncourtdefence@digital.justice.gov.uk>
+
+# fail early and print all commands
+RUN set -ex
+
+# build dependencies:
+# -virtual: create virtual package for later deletion
+# - build-base for alpine fundamentals
+#
+RUN apk --no-cache add --virtual build-dependencies \
+                    build-base \
+&& apk --no-cache add \
+                  linux-headers
+
+# add non-root user and group with alpine first available uid, 1000
+RUN addgroup -g 1000 -S appgroup \
+&& adduser -u 1000 -S appuser -G appgroup
+
+# create app directory in conventional, existing dir /usr/src
+RUN mkdir -p /usr/src/app && mkdir -p /usr/src/app/tmp
+WORKDIR /usr/src/app
+
+COPY Gemfile* ./
+
+# only install production dependencies,
+# note: installs bundler version used in Gemfile.lock
+#
+RUN gem install bundler -v $(cat Gemfile.lock | tail -1 | tr -d " ") && bundle install
+
+COPY . .
+
+# tidy up installation
+RUN apk del build-dependencies
+
+# non-root/appuser should own only what they need to
+# RUN chown -R appuser:appgroup log tmp db
+
+# expect ping environment variables
+ARG VERSION_NUMBER
+ARG COMMIT_ID
+ARG BUILD_DATE
+ARG BUILD_TAG
+ENV VERSION_NUMBER=${VERSION_NUMBER}
+ENV COMMIT_ID=${COMMIT_ID}
+ENV BUILD_DATE=${BUILD_DATE}
+ENV BUILD_TAG=${BUILD_TAG}
+
+USER 1000
+CMD "./s3-sdk-entrypoint.sh"

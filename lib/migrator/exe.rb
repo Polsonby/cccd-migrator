@@ -1,11 +1,12 @@
 module Migrator
   class Exe
+    include Helpers
     attr_reader :argv, :args, :options
 
     def initialize(argv)
       @argv = argv
       parse!
-      # validate
+      validate
     end
 
     def call
@@ -27,20 +28,9 @@ module Migrator
     end
 
     def measure
-      if options.measure
-        rt = Benchmark.realtime { yield }
-        puts "Took: " + rt.round(2).to_s.green + "(secs)".yellow
-      else
-         yield
-      end
-    end
-
-    def self.continue?(prompt = nil)
-      prompt = prompt || 'Continue?'
-      printf "\e[33m#{ prompt }\e[0m: [no/yes] "
-      response = STDIN.gets.chomp
-      exit unless response.match?(/^(y|yes)$/i)
-      true
+      return yield unless options.measure
+      rt = Benchmark.realtime { yield }
+      puts "Took: " + rt.round(2).to_s.green + " secs"
     end
 
     private

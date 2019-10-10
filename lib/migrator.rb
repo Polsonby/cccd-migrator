@@ -1,3 +1,4 @@
+require_relative 'migrator/helpers'
 require_relative 'migrator/options'
 require_relative 'migrator/commands'
 require_relative 'migrator/s3'

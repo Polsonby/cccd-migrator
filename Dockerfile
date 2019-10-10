@@ -24,7 +24,6 @@ WORKDIR /usr/src/app
 
 COPY Gemfile* ./
 
-# only install production dependencies,
 # note: installs bundler version used in Gemfile.lock
 #
 RUN gem install bundler -v $(cat Gemfile.lock | tail -1 | tr -d " ") && bundle install

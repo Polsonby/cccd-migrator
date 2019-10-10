@@ -8,9 +8,9 @@ module Migrator
 
         def summarize(bucket_name)
           ['aws', 's3', 'ls', bucket_name, '--recursive', '--human-readable', '--summarize',
-          '>',
-          "/tmp/#{bucket_name}_summary.txt",
-          '&&', 'tail', '-n', '2', "/tmp/#{bucket_name}_summary.txt"]
+          '>', "/tmp/#{bucket_name}_summary.txt",
+          '&&',
+          'tail', '-n', '2', "/tmp/#{bucket_name}_summary.txt"]
         end
 
         def empty

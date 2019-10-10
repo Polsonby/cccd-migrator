@@ -4,6 +4,8 @@ require 'colorize'
 
 module Migrator
   module S3
+    include Helpers
+
     class << self
       def sync
         Open3.popen2(*cmd.sync) do |stdin, stdout, status_thread|
@@ -29,8 +31,8 @@ module Migrator
       end
 
       def empty
-        raise 'No bucket configured' unless S3.destination_bucket_name
-        Exe.continue?("This will delete all objects in #{S3.destination_bucket_name}. Are you sure?")
+        raise 'No bucket configured' unless destination_bucket_name
+        Exe.continue?("This will delete all objects in #{destination_bucket_name}. Are you sure?")
         execute(cmd.empty, output_count: true)
       end
 
@@ -59,25 +61,7 @@ module Migrator
       end
 
       def validate
-        raise 'no destination bucket configured' unless destination_bucket_name && source_bucket_name
-      end
-
-      private
-
-      def cmd
-        Commands
-      end
-
-      def execute(cmd, output_count: false)
-        Open3.popen2(cmd.join(' ')) do |stdin, stdout, status_thread|
-          count = 0
-          stdout.each_line do |line|
-            count += 1
-            printf line
-          end
-          raise 'Failed'.red unless status_thread.value.success?
-          puts "Succeeded: #{count} lines of output".green if output_count
-        end
+        raise 'no source or destination buckets configured' unless destination_bucket_name && source_bucket_name
       end
     end
   end

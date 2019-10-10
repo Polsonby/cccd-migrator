@@ -12,15 +12,26 @@ module Migrator
       puts "Migrating #{component} using options: #{options.to_s}"
       self.class.continue? unless options.yes
 
-      case component
-        when 's3'
-          Migrator::S3.report if options.report
-          Migrator::S3.sync if options.sync
-          Migrator::S3.empty if options.empty
-        when 'rds'
-          puts 'migrating rds...TODO'
-        else
-          puts "no such component - #{ component || 'nil' }"
+      measure do
+        case component
+          when 's3'
+            Migrator::S3.report if options.report
+            Migrator::S3.sync if options.sync
+            Migrator::S3.empty if options.empty
+          when 'rds'
+            puts 'migrating rds...TODO'
+          else
+            puts "no such component - #{ component || 'nil' }"
+        end
+      end
+    end
+
+    def measure
+      if options.measure
+        rt = Benchmark.realtime { yield }
+        puts "Took: " + rt.round(2).to_s.green + "(secs)".yellow
+      else
+         yield
       end
     end
 

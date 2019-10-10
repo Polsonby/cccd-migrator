@@ -38,6 +38,10 @@ module Migrator
           options.report = s
         end
 
+        opts.on("-m", "--measure", "output time measurements for action performed") do |m|
+          options.measure = m
+        end
+
         opts.on_tail('-h', '--help', 'Show this message') do
           puts opts
           exit

@@ -6,7 +6,7 @@ module Migrator
   module S3
     class << self
       def sync
-        Open3.popen2(*sync_cmd) do |stdin, stdout, status_thread|
+        Open3.popen2(*cmd.sync) do |stdin, stdout, status_thread|
           count = 0
           stdout.each_line do |line|
             count += 1
@@ -17,42 +17,29 @@ module Migrator
         end
       end
 
-      def summary
+      def report
         puts ''
         puts 'Source bucket:'.yellow
         puts '----------------------------'.yellow
-        execute(summarize(source_bucket_name))
+        execute(cmd.summarize(source_bucket_name))
         puts ''
         puts 'Destination bucket:'.yellow
         puts '----------------------------'.yellow
-        execute(summarize(destination_bucket_name))
+        execute(cmd.summarize(destination_bucket_name))
       end
 
-      private
-
-      def sync_cmd
-        ['aws', 's3', 'sync', '--delete', source_bucket, destination_bucket, '--source-region', source_region, '--region', destination_region]
-      end
-
-      def execute(cmd)
-        Open3.popen2(cmd.join(' ')) do |stdin, stdout, status_thread|
-          puts stdout.read
-        end
-      end
-
-      def summarize(bucket_name)
-        ['aws', 's3', 'ls', bucket_name, '--recursive', '--human-readable', '--summarize',
-        '>',
-        "/tmp/#{bucket_name}_summary.txt",
-        '&&', 'tail', '-n', '2', "/tmp/#{bucket_name}_summary.txt"]
+      def empty
+        raise 'No bucket configured' unless S3.destination_bucket_name
+        Exe.continue?("This will delete all objects in #{S3.destination_bucket_name}. Are you sure?")
+        execute(cmd.empty, output_count: true)
       end
 
       def source_bucket_name
-        ENV['SOURCE_AWS_S3_BUCKET_NAME']
+        ENV.fetch('SOURCE_AWS_S3_BUCKET_NAME', nil)
       end
 
       def destination_bucket_name
-        ENV['DESTINATION_AWS_S3_BUCKET_NAME']
+        ENV.fetch('DESTINATION_AWS_S3_BUCKET_NAME', nil)
       end
 
       def source_bucket
@@ -69,6 +56,28 @@ module Migrator
 
       def destination_region
         ENV['AWS_REGION']
+      end
+
+      def validate
+        raise 'no destination bucket configured' unless destination_bucket_name && source_bucket_name
+      end
+
+      private
+
+      def cmd
+        Commands
+      end
+
+      def execute(cmd, output_count: false)
+        Open3.popen2(cmd.join(' ')) do |stdin, stdout, status_thread|
+          count = 0
+          stdout.each_line do |line|
+            count += 1
+            printf line
+          end
+          raise 'Failed'.red unless status_thread.value.success?
+          puts "Succeeded: #{count} lines of output".green if output_count
+        end
       end
     end
   end

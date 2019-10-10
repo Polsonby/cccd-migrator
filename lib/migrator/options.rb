@@ -14,24 +14,28 @@ module Migrator
       end
     end
 
-    def self.parse(args)
+    def self.parse!(args)
       options = OptionsStruct.new
 
       migration_opt_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: bin/migrate [options]"
-        opts.separator ''
-        opts.separator 'Specific options:'
-
-        opts.on_head("-c", "--component COMPONENT", COMPONENTS, "AWS service to migrate #{COMPONENTS}") do |c|
-          options.component = c
-        end
+        opts.banner = "Usage: bin/migrate [component] [options]"
+        opts.separator 'components: s3, rds'
+        opts.separator 'options:'
 
         opts.on("-y", "--yes", 'Optional: assume yes for prompts, defaults to false') do |y|
           options.yes = y
         end
 
-        opts.on("-s", "--summary", "Optional: output summary report only") do |s|
-          options.summary = s
+        opts.on("-s", "--sync", "synchronize destination with source") do |s|
+          options.sync = s
+        end
+
+        opts.on("-e", "--empty", "delete all destination bucket objects, for testing purposes") do |e|
+          options.empty = e
+        end
+
+        opts.on("-r", "--report", "output summary report only") do |s|
+          options.report = s
         end
 
         opts.on_tail('-h', '--help', 'Show this message') do

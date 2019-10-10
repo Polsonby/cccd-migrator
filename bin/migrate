@@ -2,34 +2,14 @@
 
 # example usage
 #
-# Copy s3 bucket from source dev to target dev
-#  bin/migrate -c s3 -s dev -t dev
+# Synchronize destination s3 bucket with source
+#  $ bin/migrate s3 --sync -y
+#
+# Out summary report of destination and source s3 buckets
+#  $ bin/migrate s3 --report -y
 #
 require_relative '../lib/migrator'
 
-def options
-  @options ||= Migrator::Options.parse(ARGV)
-end
-
-def continue_prompt
-  printf "\e[33mContinue? [no/yes]\e[0m: "
-  response = STDIN.gets.chomp
-  exit unless response.match?(/^(y|yes)$/i)
-end
-
 # entrypoint
-puts "Migrating using options: #{options.to_s}"
-continue_prompt unless options.yes
-
-case options.component
-  when 's3'
-    if options.summary
-      puts Migrator::S3.summary
-    else
-      Migrator::S3.sync
-    end
-  when 'rds'
-    puts 'migrating rds...'
-  else
-    puts 'unrecognized component ' + (options.component || 'nil') + '. Please specify component s3/rds.'
-end
+exe = Migrator::Exe.new(ARGV)
+exe.call

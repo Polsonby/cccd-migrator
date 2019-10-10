@@ -35,12 +35,17 @@ bin/migrate -h
 
 Produce a summary report of source and destination objects:
 ```bash
-bin/migrate -c s3 -y --summary
+bin/migrate s3 -y --report
 ```
 
 Synchronize destination with source:
 ```bash
-bin/migrate -c s3 -y
+bin/migrate s3 -y --sync
+```
+
+Delete all objects in destination bucket, for testing purposes only:
+```bash
+bin/migrate s3 -y --empty
 ```
 
 ## Setup

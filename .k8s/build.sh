@@ -35,7 +35,7 @@ function _build() {
           --build-arg BUILD_TAG=$docker_build_tag \
           --pull \
           --tag ${docker_registry_tag} \
-          -f awscliDockerfile .
+          -f Dockerfile .
 
   printf '\e[33mPushing app container image to ECR...\e[0m\n'
   docker push ${docker_registry_tag}

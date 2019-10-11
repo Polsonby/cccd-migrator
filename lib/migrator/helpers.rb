@@ -1,14 +1,23 @@
 module Migrator
   module Helpers
+    COMPONENTS = %w[s3 rds].freeze
+
     def self.included(base)
       base.include InstanceMethods
       base.extend ClassMethods
     end
 
     module InstanceMethods
+      def components
+        Helpers::COMPONENTS
+      end
     end
 
     module ClassMethods
+      def components
+        Helpers::COMPONENTS
+      end
+
       def continue?(prompt = nil)
         prompt = prompt || 'Continue?'
         printf "\e[33m#{ prompt }\e[0m: [no/yes] "

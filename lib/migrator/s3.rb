@@ -7,6 +7,12 @@ module Migrator
     include Helpers
 
     class << self
+      def call(options)
+        report if options.report
+        sync if options.sync
+        empty if options.empty
+      end
+
       def sync
         Open3.popen2(*cmd.sync) do |stdin, stdout, status_thread|
           count = 0
@@ -15,7 +21,7 @@ module Migrator
             puts line.green
           end
           raise 'Sync failed'.red unless status_thread.value.success?
-          puts "Sync succeeded: #{[count-1, 0].max} files synchronized".green
+          puts 'Sync succeeded: ' + [count-1, 0].max.to_s.green + ' files synchronized'
         end
       end
 
@@ -31,8 +37,7 @@ module Migrator
       end
 
       def empty
-        raise 'No bucket configured' unless destination_bucket_name
-        Exe.continue?("This will delete all objects in #{destination_bucket_name}. Are you sure?")
+        continue?("This will delete all objects in #{destination_bucket_name}. Are you sure?")
         execute(cmd.empty, output_count: true)
       end
 

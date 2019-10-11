@@ -6,7 +6,6 @@ module Migrator
     def initialize(argv)
       @argv = argv
       parse!
-      validate
     end
 
     def call
@@ -16,9 +15,7 @@ module Migrator
       measure do
         case component
           when 's3'
-            Migrator::S3.report if options.report
-            Migrator::S3.sync if options.sync
-            Migrator::S3.empty if options.empty
+            Migrator::S3.call(options)
           when 'rds'
             puts 'migrating rds...TODO'
           else
@@ -35,14 +32,20 @@ module Migrator
 
     private
 
+    def options_parser
+      Migrator::Options
+    end
+
     def parse!
-      @options = Migrator::Options.parse!(argv)
+      @options = options_parser.parse!(argv)
       @args = argv
-      raise 'you must supply a single component to migrate. Please specify component s3/rds.' unless @args.size.eql?(1)
-      raise "unrecognised component #{@args.first}" unless %w[s3 rds].include?(@args.first)
+      validate
     end
 
     def validate
+      raise "you must supply a single component to migrate. Please specify component one of #{components.join(', ')} ." unless args.size.eql?(1)
+      raise "unrecognised component #{component}" unless components.include?(component)
+
       case component
       when 's3'
         S3.validate

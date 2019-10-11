@@ -5,9 +5,6 @@ require 'ostruct'
 
 module Migrator
   class Options
-    ENVIRONMENTS = %w[dev staging api-sandbox production].freeze
-    COMPONENTS = %w[s3 rds].freeze
-
     class OptionsStruct < OpenStruct
       def to_s
         to_h.map { |k, v| "\t - #{k}: #{v} " }.join("\n").prepend("\n")

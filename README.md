@@ -15,12 +15,18 @@ $ .k8s/build.sh
 The docker image is intended to be deployed as a container in a standalone pod
 within the namespace hosting the destination s3 bucket. e.g. cccd-dev
 
-The [https://github.com/ministryofjustice/Claim-for-Crown-Court-Defence](Claim-for-Crown-Court-Defence) repo holds a pod.yaml (config) and deploy_migrator.sh (script) to achieve this.
+The [https://github.com/ministryofjustice/Claim-for-Crown-Court-Defence](Claim-for-Crown-Court-Defence) repo holds a migrator/pod.yaml (config) and migrator/deploy.sh (script) to achieve this.
 
 ```bash
-# example of deploying the template-deploy-migrator to the cccd-dev namespace
+# example of deploying the cccd-template-deploy-migrator to the cccd-dev namespace
 $ cd .../Claim-for-Crown-Court-Defence
-$ kubernetes_deploy/scripts/deploy_migrator dev
+$ kubernetes_deploy/pods/migrator/deploy.sh dev
+```
+
+There is also a cronjob that can be applied to schedule unattended s3 sync:
+```bash
+$ cd .../Claim-for-Crown-Court-Defence
+$ kubernetes_deploy/pods/migrator/sync_s3_cronjob.sh dev
 ```
 
 ## Run
@@ -35,18 +41,19 @@ bin/migrate -h
 
 Produce a summary report of source and destination objects:
 ```bash
-bin/migrate s3 -y --report
+bin/migrate s3 --report -ym
 ```
 
 Synchronize destination with source:
 ```bash
-bin/migrate s3 -y --sync
+bin/migrate s3 --sync -ym
 ```
 
 Delete all objects in destination bucket, for testing purposes only:
 ```bash
-bin/migrate s3 -y --empty
+bin/migrate s3 --empty -ym
 ```
+_note: `--sync` option deletes objects in destination that are not in source. So `--empty` is purely for testing purposes_
 
 ## Setup
 In order for the cli to function as intended several setup steps are required

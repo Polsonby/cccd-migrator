@@ -28,7 +28,7 @@ function _sync_s3() {
       ;;
   esac
 
-  cronjob_file=kubernetes_deploy/pods/migrator/sync_s3_cronjob.yaml
+  cronjob_file=.k8s/sync_s3_cronjob.yaml
   printf "\e[33m--------------------------------------------------\e[0m\n"
   printf "\e[33mJob: ${cronjob_file}\e[0m\n"
   printf "\e[33mContext: $context\e[0m\n"

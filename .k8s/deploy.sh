@@ -38,8 +38,8 @@ function _deploy_migrator() {
   printf "\e[33mEnvironment: $environment\e[0m\n"
   printf "\e[33mDocker image: $docker_image_tag\e[0m\n"
   printf "\e[33m--------------------------------------------------\e[0m\n"
-  kubectl apply --context ${context} -n cccd-${environment} -f kubernetes_deploy/pods/migrator/${environment}/secrets.yaml
-  kubectl apply --context ${context} -n cccd-${environment} -f kubernetes_deploy/pods/migrator/pod.yaml
+  kubectl apply --context ${context} -n cccd-${environment} -f .k8s/${environment}/secrets.yaml
+  kubectl apply --context ${context} -n cccd-${environment} -f .k8s/pod.yaml
 }
 
 _deploy_migrator $@

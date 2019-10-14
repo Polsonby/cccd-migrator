@@ -15,18 +15,17 @@ $ .k8s/build.sh
 The docker image is intended to be deployed as a container in a standalone pod
 within the namespace hosting the destination s3 bucket. e.g. cccd-dev
 
-The [https://github.com/ministryofjustice/Claim-for-Crown-Court-Defence](Claim-for-Crown-Court-Defence) repo holds a migrator/pod.yaml (config) and migrator/deploy.sh (script) to achieve this.
-
 ```bash
-# example of deploying the cccd-template-deploy-migrator to the cccd-dev namespace
-$ cd .../Claim-for-Crown-Court-Defence
-$ kubernetes_deploy/pods/migrator/deploy.sh dev
+# deploy the cccd-template-deploy-migrator to the cccd-dev namespace
+$ cd .../cccd-migrator
+$ .k8s/deploy.sh dev
 ```
 
 There is also a cronjob that can be applied to schedule unattended s3 sync:
 ```bash
-$ cd .../Claim-for-Crown-Court-Defence
-$ kubernetes_deploy/pods/migrator/sync_s3_cronjob.sh dev
+# apply the cronjob for syncing s3 between cccd-dev namespace's s3 bucket and TD dev's s3 bucket
+$ cd .../cccd-migrator
+$ .k8s/sync_s3_cronjob.sh dev
 ```
 
 ## Run

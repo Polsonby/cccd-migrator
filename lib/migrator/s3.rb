@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 require 'open3'
-require 'colorize'
 
 module Migrator
   module S3

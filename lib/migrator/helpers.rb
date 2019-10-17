@@ -20,20 +20,20 @@ module Migrator
 
       def continue?(prompt = nil)
         prompt = prompt || 'Continue?'
-        printf "\e[33m#{ prompt }\e[0m: [no/yes] "
+        printf prompt.yellow + ": [no/yes] "
         response = STDIN.gets.chomp
         exit unless response.match?(/^(y|yes)$/i)
         true
       end
 
       def execute(cmd, output_count: false)
-        Open3.popen2(cmd.join(' ')) do |stdin, stdout, status_thread|
+        Open3.popen2e(cmd.join(' ')) do |stdin, stdout_and_stderr, wait_thr|
           count = 0
-          stdout.each_line do |line|
+          stdout_and_stderr.each_line do |line|
             count += 1
-            printf line
+            printf "#{count}: #{line}"
           end
-          raise 'Failed'.red unless status_thread.value.success?
+          raise ['Failure'.red, ': ', cmd.join(' ')].join unless wait_thr.value.success?
           puts "Succeeded: #{count} lines of output".green if output_count
         end
       end

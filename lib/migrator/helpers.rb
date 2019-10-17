@@ -14,6 +14,63 @@ module Migrator
     end
 
     module ClassMethods
+      def configuration
+        Migrator.configuration
+      end
+      alias_method :config, :configuration
+
+      def source_region
+        config.s3.source.region
+      end
+
+      def destination_region
+        config.s3.destination.region
+      end
+
+      def source_bucket_name
+        config.s3.source.bucket_name
+      end
+
+      def destination_bucket_name
+        config.s3.destination.bucket_name
+      end
+
+      def source_bucket
+        "s3://#{source_bucket_name}"
+      end
+
+      def destination_bucket
+        "s3://#{destination_bucket_name}"
+      end
+
+      def source_database_url
+        config.rds.source.database_url
+      end
+
+      def source_database_name
+        config.rds.source.database_name
+      end
+
+      def destination_database_url
+        config.rds.destination.database_url
+      end
+
+      def destination_database_name
+        config.rds.destination.database_name
+      end
+
+      def destination_database_username
+        config.rds.destination.database_username
+      end
+
+      def destination_database_password
+        config.rds.destination.database_password
+      end
+
+      def destination_database_host
+        config.rds.destination.database_host
+      end
+
       def components
         Helpers::COMPONENTS
       end
@@ -31,7 +88,7 @@ module Migrator
           count = 0
           stdout_and_stderr.each_line do |line|
             count += 1
-            printf "#{count}: #{line}"
+            printf line
           end
           raise ['Failure'.red, ': ', cmd.join(' ')].join unless wait_thr.value.success?
           puts "Succeeded: #{count} lines of output".green if output_count

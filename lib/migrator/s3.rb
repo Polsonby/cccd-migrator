@@ -40,30 +40,6 @@ module Migrator
         execute(cmd.empty, output_count: true)
       end
 
-      def source_bucket_name
-        ENV.fetch('SOURCE_AWS_S3_BUCKET_NAME', nil)
-      end
-
-      def destination_bucket_name
-        ENV.fetch('DESTINATION_AWS_S3_BUCKET_NAME', nil)
-      end
-
-      def source_bucket
-        "s3://#{source_bucket_name}"
-      end
-
-      def destination_bucket
-        "s3://#{destination_bucket_name}"
-      end
-
-      def source_region
-        ENV['SOURCE_AWS_REGION']
-      end
-
-      def destination_region
-        ENV['AWS_REGION']
-      end
-
       def validate
         raise 'no source or destination buckets configured' unless destination_bucket_name && source_bucket_name
       end

@@ -1,9 +1,11 @@
 module Migrator
   module S3
     module Commands
+      include Helpers
+
       class << self
         def sync
-          ['aws', 's3', 'sync', '--delete', S3.source_bucket, S3.destination_bucket, '--source-region', S3.source_region, '--region', S3.destination_region]
+          ['aws', 's3', 'sync', '--delete', source_bucket, destination_bucket, '--source-region', source_region, '--region', destination_region]
         end
 
         def summarize(bucket_name)
@@ -14,7 +16,7 @@ module Migrator
         end
 
         def empty
-          ['aws', 's3', 'rm', S3.destination_bucket, '--recursive']
+          ['aws', 's3', 'rm', destination_bucket, '--recursive']
         end
       end
     end
@@ -22,11 +24,13 @@ module Migrator
 
   module Rds
     module Commands
+      include Helpers
+
       class << self
         def test_conn
           [
             'psql',
-            Rds.destination_database_url,
+            destination_database_url,
             '-c', "\"select 'connected to DB ' || current_database() || ' as user ' || current_user as conn_details;\""
           ]
         end
@@ -36,12 +40,12 @@ module Migrator
         #
         def dropdb
           [
-            "PGPASSWORD=#{Rds.destination_database_password}",
+            "PGPASSWORD=#{destination_database_password}",
             'dropdb',
             '--echo',
-            "--host=#{Rds.destination_database_host}",
-            "--username=#{Rds.destination_database_username}",
-            Rds.destination_database_name
+            "--host=#{destination_database_host}",
+            "--username=#{destination_database_username}",
+            destination_database_name
           ]
         end
 
@@ -50,14 +54,14 @@ module Migrator
         #
         def createdb
           [
-            "PGPASSWORD=#{Rds.destination_database_password}",
+            "PGPASSWORD=#{destination_database_password}",
             'createdb',
             '--echo',
             "--encoding=utf-8",
-            "--owner=#{Rds.destination_database_username}",
-            "--host=#{Rds.destination_database_host}",
-            "--username=#{Rds.destination_database_username}",
-            Rds.destination_database_name
+            "--owner=#{destination_database_username}",
+            "--host=#{destination_database_host}",
+            "--username=#{destination_database_username}",
+            destination_database_name
           ]
         end
 
@@ -66,10 +70,10 @@ module Migrator
         #
         def list_dbs
           [
-            "PGPASSWORD=#{Rds.destination_database_password}",
+            "PGPASSWORD=#{destination_database_password}",
             'psql', '--list',
-            '-h', Rds.destination_database_host,
-            '-U', Rds.destination_database_username
+            '-h', destination_database_host,
+            '-U', destination_database_username
           ]
         end
 
@@ -105,7 +109,7 @@ module Migrator
           raise "invalid export section specified. must be one of #{sections.join(', ')}" unless sections.include? section
           [
             'pg_dump',
-            Rds.source_database_url,
+            source_database_url,
             '--no-owner',
             "--format=plain",
             "--section=#{section}",
@@ -120,7 +124,7 @@ module Migrator
           raise "invalid import section specified. must be one of #{sections.join(', ')}" unless sections.include? section
           [
             'psql',
-            Rds.destination_database_url,
+            destination_database_url,
             '--set', 'ON_ERROR_STOP=on' ,
             '-f', "/tmp/#{section}.sql"
           ]
@@ -128,7 +132,7 @@ module Migrator
 
         def pipe(section)
           raise "invalid import section specified. must be one of #{sections.join(', ')}" unless sections.include? section
-          ['pg_dump', Rds.source_database_url, "--section=#{section}", '|', 'psql', Rds.destination_database_url, '--set', 'ON_ERROR_STOP=on']
+          ['pg_dump', source_database_url, "--section=#{section}", '|', 'psql', destination_database_url, '--set', 'ON_ERROR_STOP=on']
         end
 
         def summarize
@@ -138,7 +142,7 @@ module Migrator
         end
 
         def analyze(verbose = false)
-          ['psql', Rds.destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
+          ['psql', destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
         end
       end
     end

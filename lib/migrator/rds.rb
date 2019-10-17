@@ -14,7 +14,7 @@ module Migrator
       def test_connection
         execute(cmd.test_conn)
       rescue RuntimeError
-        puts "connection to #{Rds.destination_bucket_name} failed!".orange
+        puts "connection to #{destination_bucket_name} failed. Could be already dropped!".red
       end
 
       def sync(piped = false)
@@ -56,7 +56,7 @@ module Migrator
       def dropdb
         execute(cmd.dropdb)
       rescue RuntimeError
-        puts "DB #{Rds.destination_database_name} does not exist!".yellow
+        puts "DB #{destination_database_name} does not exist!".yellow
       end
 
       def createdb
@@ -72,34 +72,6 @@ module Migrator
 
       def analyze(verbose: false)
         execute(cmd.analyze(verbose))
-      end
-
-      def source_database_url
-        ENV.fetch('SOURCE_DATABASE_URL', nil)
-      end
-
-      def source_database_name
-        ENV.fetch('SOURCE_DATABASE_NAME', nil)
-      end
-
-      def destination_database_url
-        ENV.fetch('DESTINATION_DATABASE_URL', nil)
-      end
-
-      def destination_database_name
-        ENV.fetch('DESTINATION_DATABASE_NAME', nil)
-      end
-
-      def destination_database_username
-        ENV.fetch('DESTINATION_DATABASE_USERNAME', nil)
-      end
-
-      def destination_database_password
-        ENV.fetch('DESTINATION_DATABASE_PASSWORD', nil)
-      end
-
-      def destination_database_host
-        ENV.fetch('DESTINATION_DATABASE_HOST', nil)
       end
 
       def validate

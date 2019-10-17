@@ -40,3 +40,43 @@ spec:
           secretKeyRef:
             name: cccd-template-deploy-secrets
             key: AWS_S3_BUCKET_NAME
+      - name: SOURCE_DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: cccd-template-deploy-secrets
+            key: DATABASE_URL
+      - name: SOURCE_DATABASE_NAME
+        valueFrom:
+          secretKeyRef:
+            name: cccd-template-deploy-secrets
+            key: DATABASE_NAME
+      - name: DESTINATION_DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: url
+      - name: DESTINATION_DATABASE_HOST
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: rds_instance_address
+      - name: DESTINATION_DATABASE_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: database_username
+      - name: DESTINATION_DATABASE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: database_password
+      - name: DESTINATION_DATABASE_NAME
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: database_name
+      - name: DESTINATION_DATABASE_NAME
+        valueFrom:
+          secretKeyRef:
+            name: cccd-rds
+            key: database_name

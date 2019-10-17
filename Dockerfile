@@ -1,4 +1,4 @@
-FROM ruby:2.6.4-alpine3.10
+FROM ruby:2.6.5-alpine3.10
 MAINTAINER Ministry of Justice, Claim for crown court defence <crowncourtdefence@digital.justice.gov.uk>
 
 # fail early and print all commands
@@ -16,6 +16,7 @@ RUN apk --no-cache update \
     python py-pip py-setuptools \
     ca-certificates\
     curl less groff \
+    postgresql \
     && pip --no-cache-dir install awscli --upgrade \
     && rm -rf /var/cache/apk/*
 

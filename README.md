@@ -1,7 +1,6 @@
 # CCCD Migrator
 
-Ruby cli that wraps calls to aws cli commandline utility for s3 synchronization
-between template deploy environment's s3 buckets (source) and live-1 s3 buckets (destination).
+A CLI that wraps calls to the `aws cli` for s3 synchronization and `pg_dump/psql` for RDS/postgres database "migration". Both data stores are unidirectionally copied from template deploy environments (source) to live-1 (destination).
 
 ## Build
 To build the docker image using the provided script you will need credentials for accessing live-1 cccd ECR registry. The script assumes you have valid aws credentials stored in a profile named `ecr-live1`.
@@ -13,15 +12,21 @@ $ .k8s/build.sh
 
 ## Deploy
 The docker image is intended to be deployed as a container in a standalone pod
-within the namespace hosting the destination s3 bucket. e.g. cccd-dev
+within the namespace hosting the destination s3 bucket and RDS instance. e.g. cccd-dev
 
 ```bash
-# deploy the cccd-template-deploy-migrator to the cccd-dev namespace
+# deploy master branch cccd-template-deploy-migrator to the cccd-dev namespace
 $ cd .../cccd-migrator
 $ .k8s/deploy.sh dev
 ```
 
-There is also a cronjob that can be applied to schedule unattended s3 sync:
+```bash
+# deploy a branch of cccd-template-deploy-migrator to the cccd-dev namespace
+$ cd .../cccd-migrator
+$ .k8s/deploy.sh dev <my-branch>-latest|<commit-sha>
+```
+
+There is a cronjob that can be applied to schedule unattended s3 sync:
 ```bash
 # apply the cronjob for syncing s3 between cccd-dev namespace's s3 bucket and TD dev's s3 bucket
 $ cd .../cccd-migrator
@@ -29,7 +34,9 @@ $ .k8s/sync_s3_cronjob.sh dev
 ```
 
 ## Run
-It is intended that the migration task be run as a cronjob after an initial sync in order to keep the template-deploy and live-1 buckets synchronized.
+
+### S3
+It is intended that the migration task be run once via the pod and, thereafter, as a cronjob. The cronjob synchronizes the live-1 s3 bucket synchronized with template-deploy every hour.
 
 Note that the wrapped `aws s3 sync` command includes the `--delete` option. This will delete objects in destination that do not exist in source.
 
@@ -54,8 +61,24 @@ bin/migrate s3 --empty -ym
 ```
 _note: `--sync` option deletes objects in destination that are not in source. So `--empty` is purely for testing purposes_
 
+
+### RDS
+The "migration" of a single postgres database can be achieved using this utility.
+
+The CLI will:
+
+ - drop the existing `destination` database
+ - create an empty `destination` database with the same name
+ - produce plain text dump files from the `source` database
+ - apply those dump files to the empty database
+
+Recreate destination database using source database:
+```bash
+$ bin/migrate rds --sync -ym
+```
+
 ## Setup
-In order for the cli to function as intended several setup steps are required
+In order for the CLI to function as intended several setup steps are required
 
 ### Destination (live-1) s3 bucket IAM user policy.
 

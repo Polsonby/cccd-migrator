@@ -68,12 +68,11 @@ module Migrator
         #
         # PGPASSWORD=$DESTINATION_DATABASE_PASSWORD psql --list --host=$DESTINATION_DATABASE_HOST --username=$DESTINATION_DATABASE_USERNAME
         #
-        def list_dbs
+        def list_dbs(url)
           [
-            "PGPASSWORD=#{destination_database_password}",
-            'psql', '--list',
-            '-h', destination_database_host,
-            '-U', destination_database_username
+            'psql',
+            url,
+            '--list'
           ]
         end
 
@@ -102,7 +101,7 @@ module Migrator
         end
 
         def export(section)
-          puts "EXPORTING #{section}"
+          puts "EXPORTING #{section}".yellow
 
           # TODO the sed command is only required from pre-data
           #
@@ -120,7 +119,7 @@ module Migrator
         end
 
         def import(section)
-          puts "IMPORTING #{section}"
+          puts "IMPORTING #{section}".yellow
           raise "invalid import section specified. must be one of #{sections.join(', ')}" unless sections.include? section
           [
             'psql',
@@ -132,7 +131,19 @@ module Migrator
 
         def pipe(section)
           raise "invalid import section specified. must be one of #{sections.join(', ')}" unless sections.include? section
-          ['pg_dump', source_database_url, "--section=#{section}", '|', 'psql', destination_database_url, '--set', 'ON_ERROR_STOP=on']
+          [
+            'pg_dump',
+            source_database_url,
+            '--no-owner',
+            "--format=plain",
+            "--section=#{section}",
+            '|',
+            'sed','-E', "'s/(COMMENT ON EXTENSION.*)/-- \1/'",
+            '|',
+            'psql',
+            destination_database_url,
+            '--set', 'ON_ERROR_STOP=on'
+          ]
         end
 
         def summarize

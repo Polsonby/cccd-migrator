@@ -8,7 +8,7 @@ module Migrator
       def call(options)
         # test_connection - TODO: fails when db already dropped
         report if options.report
-        sync if options.sync
+        sync(piped: true) if options.sync
       end
 
       def test_connection
@@ -17,8 +17,9 @@ module Migrator
         puts "connection to #{destination_bucket_name} failed. Could be already dropped!".red
       end
 
-      def sync(piped = false)
+      def sync(piped: false)
         empty
+
         if piped
           execute(cmd.pipe('pre-data'))
           execute(cmd.pipe('data'))
@@ -55,8 +56,9 @@ module Migrator
 
       def dropdb
         execute(cmd.dropdb)
-      rescue RuntimeError
-        puts "DB #{destination_database_name} does not exist!".yellow
+      rescue RuntimeError => e
+        puts "DB #{destination_database_name} could not be dropped!".red
+        raise e
       end
 
       def createdb

@@ -36,7 +36,12 @@ $ .k8s/sync_s3_cronjob.sh dev
 ## Run
 
 ### S3
-It is intended that the migration task be run once via the pod and, thereafter, as a cronjob. The cronjob synchronizes the live-1 s3 bucket synchronized with template-deploy every hour.
+It is intended that the migration task be run once via the pod and, thereafter, as a cronjob. The cronjob synchronizes the live-1 s3 bucket with template-deploy every hour, on the hour, in the namespace it is applied to.
+
+The cronjob(s) will need to be deleted once a final sync is done on "d-day"
+```bash
+kubectl --context ${context} -n cccd-${environment} delete cronjob sync_s3_cronjob
+```
 
 Note that the wrapped `aws s3 sync` command includes the `--delete` option. This will delete objects in destination that do not exist in source.
 
@@ -67,18 +72,19 @@ The "migration" of a single postgres database can be achieved using this utility
 
 The CLI will:
 
+ - terminate existing connections on the `destination` database
  - drop the existing `destination` database
- - create an empty `destination` database with the same name
+ - create an empty `destination` database with the same name and owner
  - produce plain text dump files from the `source` database
- - apply those dump files to the empty database
+ - apply those dump files to the empty `destination` database
 
 Recreate destination database using source database:
 ```bash
 $ bin/migrate rds --sync -ym
 ```
 
-## Setup
-In order for the CLI to function as intended several setup steps are required
+## S3 setup
+In order for the CLI's s3 synchronization to work several setup steps are required.
 
 ### Destination (live-1) s3 bucket IAM user policy.
 
@@ -166,3 +172,47 @@ You can then create a bucket policy on the source bucket you are wanting to sync
 ```
 
 Note: these settings limit the destination IAM users actions and resource access to list, get and copy type actions only on the source bucket.
+
+## RDS setup
+In order for the CLI's rds "synchronization" to work several setup steps are required.
+
+### Source (template-deploy) RDS database instance permissions
+
+The source database will need to provide permissions to the live-1 cluster to enable `pg_dump` to read the data. To summarise, this requires the source db instance to be public but its VPC security group to whitelist inbound traffic from the live-1 cluster. This can be achieved as follows:
+
+#### Whitelist inbound live-1 cluster traffic
+- Login to the aws account that owns the rds instance
+- navigate to RDS service
+- click the "DB instances" link
+- search/identify the db instance that is to be the source
+- click on the db instance i.e. navigate to that instances page
+- on the instance page locate the "VPC security groups" section
+- click on the link to the VPC security group
+- In Security group page select the "Inbound" tab
+- Hit edit for Inbound rules
+- In the Edit inbound rules dialog add 3 rules
+- Each "Inbound rule" should be
+    - Type: PostgreSQL
+    - Protocol: TCP
+    - Port range: 5432
+    - Source: <ip-range/cidr for live-1 cluster, ask Cloud platorms\>
+    - Description: live-1 cluster whitelist
+- Hit save
+
+#### Make database public
+
+If the database is not public (typical default) it will need to be made so.
+
+- check its public status
+    - Navigate to the specific RDS DB instance page
+    - Look for "Public accessibility" within "Connectivity & security" section
+- Make public (if required)
+    - Navigate to the specific RDS DB instance page
+    - Hit Modify button
+    - On the "Modify DB Instance" page select yes radio option for "Public accessibility"
+    - Hit continue on the bottom of the page
+    - select "Apply immediately" radio option
+    - **WARNING: note that this will cause downtime**
+    - If happy with downtime hit "Modify DB instance" button
+
+

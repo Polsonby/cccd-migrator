@@ -141,13 +141,13 @@ You should get output similar to below:
 {
 "UserId": "<ALPHANUMERIC>",
 "Account": "<LONG-INTEGER>",
-"Arn": "arn:aws:iam::<LONG_INTEGER>:<dir-structure-from-cloud-platforms>-<alphanumeric>"
+"Arn": "arn:aws:iam::<LONG_INTEGER>:user/system/s3-bucket-user/<team>/<random-s3-bucket-username>"
 }
 ```
 
 You can then create a bucket policy on the source bucket you are wanting to sync (copy) data from.
 
-
+Example source bucket policy
 ```json
 {
     "Version": "2012-10-17",
@@ -156,6 +156,7 @@ You can then create a bucket policy on the source bucket you are wanting to sync
             "Sid": "AllowCccdSourceBucketAccess",
             "Effect": "Allow",
             "Principal": {
+              arn:aws:iam::<accountid>:user/system/s3-bucket-user/<team>/s3-bucket-user-random
                 "AWS": "arn:aws:iam::<user-id-from-sts-output>"
             },
             "Action": [
@@ -172,6 +173,15 @@ You can then create a bucket policy on the source bucket you are wanting to sync
 ```
 
 Note: these settings limit the destination IAM users actions and resource access to list, get and copy type actions only on the source bucket.
+
+## S3 Configuration
+
+You must supply the following environment variables for s3 commands to function:
+
+  - source region: `SOURCE_AWS_REGION`
+  - source bucket name: `SOURCE_AWS_S3_BUCKET_NAME`
+  - destination region: `AWS_REGION`
+  - destination bucket name: `DESTINATION_AWS_S3_BUCKET_NAME`
 
 ## RDS setup
 In order for the CLI's rds "synchronization" to work several setup steps are required.
@@ -215,4 +225,14 @@ If the database is not public (typical default) it will need to be made so.
     - **WARNING: note that this will cause downtime**
     - If happy with downtime hit "Modify DB instance" button
 
+## RDS Configuration
 
+You must supply the following environment variables for rds commands to function:
+
+  - source db url: `SOURCE_DATABASE_URL`
+  - source db name: `SOURCE_DATABASE_NAME`
+  - destination db url: `DESTINATION_DATABASE_URL`
+  - destination db username: `DESTINATION_DATABASE_USERNAME`
+  - destination db password: `DESTINATION_DATABASE_PASSWORD`
+  - destination db host: `DESTINATION_DATABASE_HOST`
+  - destination db name: `DESTINATION_DATABASE_NAME`

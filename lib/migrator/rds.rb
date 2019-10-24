@@ -6,15 +6,16 @@ module Migrator
 
     class << self
       def call(options)
-        # test_connection - TODO: fails when db already dropped
+        test_connection
         report if options.report
-        sync(piped: true) if options.sync
+        sync(piped: options.pipe) if options.sync
       end
 
       def test_connection
         execute(cmd.test_conn)
       rescue RuntimeError
-        puts "connection to #{destination_bucket_name} failed. Could be already dropped!".red
+        puts "Unable to connect to DB #{destination_database_name}!".red
+        continue?('Proceed anyway?')
       end
 
       def sync(piped: false)
@@ -46,6 +47,10 @@ module Migrator
 
       # TODO
       def report
+        puts ''
+        puts 'Source & Destination tuple count:'.yellow
+        puts '----------------------------'.yellow
+        cmd.summarize
       end
 
       def terminate_connections

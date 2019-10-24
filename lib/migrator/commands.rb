@@ -31,7 +31,8 @@ module Migrator
           [
             'psql',
             destination_database_url,
-            '-c', "\"select 'connected to DB ' || current_database() || ' as user ' || current_user as conn_details;\""
+            '-c',
+            "\"select current_database();\""
           ]
         end
 
@@ -146,14 +147,41 @@ module Migrator
           ]
         end
 
+        def analyze(verbose = false)
+          ['psql', destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
+        end
+
         def summarize
+          destination_rs = pg_exec(destination_database_url, live_tuple_count)
+          dst = destination_rs.each_with_object({}) {|rec, h| h[rec['relname']] = rec['n_live_tup'] }
+
+          source_rs = pg_exec(source_database_url, live_tuple_count)
+          src = source_rs.each_with_object({}) {|rec, h| h[rec['relname']] = rec['n_live_tup'] }
+
+          padding = src.keys.map(&:length).max + 2
+
+          puts "#{'relname'.ljust(padding, ' ')}source count  destination count"
+          src.each do |relname, count|
+            color = count.eql?(dst[relname]) ? :green : :red
+            puts "#{relname.ljust(padding, ' ')}#{count.ljust(14, ' ')}#{dst[relname]}".send(color)
+          end
+
           # TODO
-          # number of tuples per table
           # current sequence values for sequences
         end
 
-        def analyze(verbose = false)
-          ['psql', destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
+        def pg_exec(url, sql)
+          uri = URI.parse(url)
+          conn = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
+          rs = conn.exec(sql)
+        end
+
+        def live_tuple_count
+          <<~SQL
+            SELECT schemaname, relname, n_live_tup
+            FROM pg_stat_user_tables
+            ORDER BY relname, n_live_tup DESC;
+          SQL
         end
       end
     end

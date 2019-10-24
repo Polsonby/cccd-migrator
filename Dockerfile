@@ -16,6 +16,7 @@ RUN apk --no-cache update \
     python py-pip py-setuptools \
     ca-certificates\
     curl less groff \
+    postgresql-dev \
     postgresql \
     && pip --no-cache-dir install awscli --upgrade \
     && rm -rf /var/cache/apk/*

@@ -6,16 +6,11 @@ module Migrator
 
     class << self
       def call(options)
-        test_connection
+        test_connection(destination_database_url)
+        test_connection(source_database_url)
+
         report if options.report
         sync(piped: options.pipe) if options.sync
-      end
-
-      def test_connection
-        execute(cmd.test_conn)
-      rescue RuntimeError
-        puts "Unable to connect to DB #{destination_database_name}!".red
-        continue?('Proceed anyway?')
       end
 
       def sync(piped: false)
@@ -91,6 +86,16 @@ module Migrator
           destination_database_name &&
           destination_database_username &&
           destination_database_host
+      end
+
+      private
+
+      def test_connection(url)
+        execute(cmd.test_conn(url))
+      rescue RuntimeError
+        dbname = URI.parse(url)&.path&.tr('/','')
+        puts "Unable to connect to DB #{dbname}!".red
+        continue?('Proceed anyway?')
       end
     end
   end

@@ -27,10 +27,10 @@ module Migrator
       include Helpers
 
       class << self
-        def test_conn
+        def test_conn(url)
           [
             'psql',
-            destination_database_url,
+            url,
             '-c',
             "\"select current_database();\""
           ]
@@ -182,7 +182,7 @@ module Migrator
         def pg_exec(url, sql)
           uri = URI.parse(url)
           conn = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
-          rs = conn.exec(sql)
+          conn.exec(sql)
         end
 
         def live_tuple_count

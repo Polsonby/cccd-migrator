@@ -151,24 +151,33 @@ module Migrator
           ['psql', destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
         end
 
-        def summarize
-          destination_rs = pg_exec(destination_database_url, live_tuple_count)
-          dst = destination_rs.each_with_object({}) {|rec, h| h[rec['relname']] = rec['n_live_tup'] }
+        def live_tuple_output
+          dst = live_tuples(destination_database_url)
+          src = live_tuples(source_database_url)
 
-          source_rs = pg_exec(source_database_url, live_tuple_count)
-          src = source_rs.each_with_object({}) {|rec, h| h[rec['relname']] = rec['n_live_tup'] }
+          pad = src.keys.map(&:length).max + 2
 
-          padding = src.keys.map(&:length).max + 2
-
-          puts "#{'relname'.ljust(padding, ' ')}source count  destination count"
+          puts "#{'relname'.rpad(pad)}#{'source'.rpad(pad)}#{'destination'.rpad(pad)}"
           src.each do |relname, count|
             color = count.eql?(dst[relname]) ? :green : :red
-            puts "#{relname.ljust(padding, ' ')}#{count.ljust(14, ' ')}#{dst[relname]}".send(color)
+            puts "#{relname.rpad(pad)}#{count.rpad(pad)}#{dst[relname].rpad(pad)}".send(color)
           end
-
-          # TODO
-          # current sequence values for sequences
         end
+
+        def sequence_last_values_output
+          dst = sequence_ids(destination_database_url)
+          src = sequence_ids(source_database_url)
+
+          pad = src.keys.map(&:length).max + 2
+
+          puts "#{'sequence_name'.rpad(pad)}#{'source'.rpad(pad)}#{'destination'.rpad(pad)}"
+          src.each do |seq, value|
+            color = value.eql?(dst[seq]) ? :green : :red
+            puts "#{seq.rpad(pad)}#{value.rpad(pad)}#{dst[seq].rpad(pad)}".send(color)
+          end
+        end
+
+        private
 
         def pg_exec(url, sql)
           uri = URI.parse(url)
@@ -182,6 +191,38 @@ module Migrator
             FROM pg_stat_user_tables
             ORDER BY relname, n_live_tup DESC;
           SQL
+        end
+
+        def live_tuples(url)
+          rs = pg_exec(url, live_tuple_count)
+          rs.each_with_object({}) { |rec, h| h[rec['relname']] = rec['n_live_tup'] }
+        end
+
+        def all_sequence_ids_func
+          <<~SEQID_FUNC
+            CREATE OR REPLACE FUNCTION all_sequence_ids() RETURNS TABLE(sequence_name text, last_value bigint)
+            AS
+            $body$
+            BEGIN
+              FOR sequence_name IN (SELECT c.relname AS sequencename FROM pg_class c WHERE (c.relkind = 'S'))
+              LOOP
+                RETURN QUERY EXECUTE 'SELECT ' || quote_literal(sequence_name) || '::text, last_value FROM ' || sequence_name;
+              END LOOP;
+              RETURN;
+            END
+            $body$
+            LANGUAGE 'plpgsql';
+          SEQID_FUNC
+        end
+
+        def all_sequence_ids_sql
+          'SELECT * FROM all_sequence_ids() ORDER BY sequence_name;'
+        end
+
+        def sequence_ids(url)
+          pg_exec(url, all_sequence_ids_func)
+          rs = pg_exec(url, all_sequence_ids_sql)
+          rs.each_with_object({}) { |rec, h| h[rec['sequence_name']] = rec['last_value'] }
         end
       end
     end

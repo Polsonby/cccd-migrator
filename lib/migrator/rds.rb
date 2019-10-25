@@ -45,12 +45,16 @@ module Migrator
         execute(cmd.import(section))
       end
 
-      # TODO
       def report
         puts ''
         puts 'Source & Destination tuple count:'.yellow
-        puts '----------------------------'.yellow
-        cmd.summarize
+        puts '-----------------------------------'.yellow
+        cmd.live_tuple_output
+        puts ''
+        puts 'Source & Destination sequence IDs:'.yellow
+        puts '-----------------------------------'.yellow
+        cmd.sequence_last_values_output
+        puts ''
       end
 
       def terminate_connections

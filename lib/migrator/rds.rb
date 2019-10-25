@@ -42,9 +42,9 @@ module Migrator
 
       def report
         puts ''
-        puts 'Source & Destination tuple count:'.yellow
+        puts 'Source & Destination table counts:'.yellow
         puts '-----------------------------------'.yellow
-        cmd.live_tuple_output
+        cmd.table_counts_output
         puts ''
         puts 'Source & Destination sequence IDs:'.yellow
         puts '-----------------------------------'.yellow

@@ -151,16 +151,16 @@ module Migrator
           ['psql', destination_database_url, '-c', "ANALYZE#{' VERBOSE' if verbose};"]
         end
 
-        def live_tuple_output
-          dst = live_tuples(destination_database_url)
-          src = live_tuples(source_database_url)
+        def table_counts_output
+          dst = table_counts(destination_database_url)
+          src = table_counts(source_database_url)
 
           pad = src.keys.map(&:length).max + 2
 
-          puts "#{'relname'.rpad(pad)}#{'source'.rpad(pad)}#{'destination'.rpad(pad)}"
-          src.each do |relname, count|
-            color = count.eql?(dst[relname]) ? :green : :red
-            puts "#{relname.rpad(pad)}#{count.rpad(pad)}#{dst[relname].rpad(pad)}".send(color)
+          puts "#{'table_name'.rpad(pad)}#{'source'.rpad(pad)}#{'destination'.rpad(pad)}"
+          src.each do |table, count|
+            color = count.eql?(dst[table]) ? :green : :red
+            puts "#{table.rpad(pad)}#{count.rpad(pad)}#{dst[table].rpad(pad)}".send(color)
           end
         end
 
@@ -185,17 +185,43 @@ module Migrator
           conn.exec(sql)
         end
 
-        def live_tuple_count
-          <<~SQL
-            SELECT schemaname, relname, n_live_tup
-            FROM pg_stat_user_tables
-            ORDER BY relname, n_live_tup DESC;
-          SQL
+        def all_table_counts_func
+          <<~TABCOUNT_FUNC
+            CREATE OR REPLACE FUNCTION all_table_counts() RETURNS TABLE(table_name text, tuple_count bigint)
+            AS
+            $body$
+            BEGIN
+              FOR table_name IN (SELECT
+                                    c.relname AS tablename
+                                  FROM pg_class c
+                                  LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace)
+                                  WHERE
+                                    nspname NOT IN ('pg_catalog', 'information_schema')
+                                    AND relkind='r')
+              LOOP
+                RETURN QUERY EXECUTE 'SELECT ' || quote_literal(table_name) || '::text as table_name, count(*) as tuple_count FROM ' || table_name;
+              END LOOP;
+              RETURN;
+            END
+            $body$
+            LANGUAGE 'plpgsql';
+          TABCOUNT_FUNC
         end
 
-        def live_tuples(url)
-          rs = pg_exec(url, live_tuple_count)
-          rs.each_with_object({}) { |rec, h| h[rec['relname']] = rec['n_live_tup'] }
+        def drop_all_table_counts_func
+          'DROP FUNCTION all_table_counts();'
+        end
+
+        def all_table_counts_sql
+          'SELECT * FROM all_table_counts() ORDER BY table_name;'
+        end
+
+        def table_counts(url)
+          pg_exec(url, all_table_counts_func)
+          rs = pg_exec(url, all_table_counts_sql)
+          rs.each_with_object({}) { |rec, h| h[rec['table_name']] = rec['tuple_count'] }
+        ensure
+          pg_exec(url, drop_all_table_counts_func)
         end
 
         def all_sequence_ids_func
@@ -215,6 +241,10 @@ module Migrator
           SEQID_FUNC
         end
 
+        def drop_all_sequence_ids_func
+          'DROP FUNCTION all_sequence_ids();'
+        end
+
         def all_sequence_ids_sql
           'SELECT * FROM all_sequence_ids() ORDER BY sequence_name;'
         end
@@ -223,6 +253,8 @@ module Migrator
           pg_exec(url, all_sequence_ids_func)
           rs = pg_exec(url, all_sequence_ids_sql)
           rs.each_with_object({}) { |rec, h| h[rec['sequence_name']] = rec['last_value'] }
+        ensure
+          pg_exec(url, drop_all_sequence_ids_func)
         end
       end
     end

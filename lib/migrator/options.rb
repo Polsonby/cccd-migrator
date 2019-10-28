@@ -27,6 +27,10 @@ module Migrator
           options.sync = s
         end
 
+        opts.on("-p", "--[no-]pipe", "pipe DB source dump to destination, no file output") do |p|
+          options.pipe = p
+        end
+
         opts.on("-e", "--empty", "delete all destination bucket objects, for testing purposes") do |e|
           options.empty = e
         end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 require 'open3'
-require 'colorize'
 
 module Migrator
   module S3
@@ -39,30 +38,6 @@ module Migrator
       def empty
         continue?("This will delete all objects in #{destination_bucket_name}. Are you sure?")
         execute(cmd.empty, output_count: true)
-      end
-
-      def source_bucket_name
-        ENV.fetch('SOURCE_AWS_S3_BUCKET_NAME', nil)
-      end
-
-      def destination_bucket_name
-        ENV.fetch('DESTINATION_AWS_S3_BUCKET_NAME', nil)
-      end
-
-      def source_bucket
-        "s3://#{source_bucket_name}"
-      end
-
-      def destination_bucket
-        "s3://#{destination_bucket_name}"
-      end
-
-      def source_region
-        ENV['SOURCE_AWS_REGION']
-      end
-
-      def destination_region
-        ENV['AWS_REGION']
       end
 
       def validate

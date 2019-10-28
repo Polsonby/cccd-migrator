@@ -17,7 +17,7 @@ module Migrator
           when 's3'
             Migrator::S3.call(options)
           when 'rds'
-            puts 'migrating rds...TODO'
+            Migrator::Rds.call(options)
           else
             puts "no such component - #{ component || 'nil' }"
         end
@@ -43,14 +43,15 @@ module Migrator
     end
 
     def validate
-      raise "you must supply a single component to migrate. Please specify component one of #{components.join(', ')} ." unless args.size.eql?(1)
+      raise "you must supply a single component to migrate. Please specify one of #{components.join(', ')} ." unless args.size.eql?(1)
       raise "unrecognised component #{component}" unless components.include?(component)
 
+      # component.capitalize.constantize.send(:validate)
       case component
       when 's3'
         S3.validate
       when 'rds'
-        'validate rds'
+        Rds.validate
       end
     end
 

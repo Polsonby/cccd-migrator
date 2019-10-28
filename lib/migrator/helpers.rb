@@ -1,6 +1,7 @@
 module Migrator
   module Helpers
     COMPONENTS = %w[s3 rds].freeze
+    REQUIRE_SSL = '?sslmode=require'.freeze
 
     def self.included(base)
       base.include InstanceMethods
@@ -44,7 +45,7 @@ module Migrator
       end
 
       def source_database_url
-        config.rds.source.database_url
+        config.rds.source.database_url + require_ssl
       end
 
       def source_database_name
@@ -52,7 +53,7 @@ module Migrator
       end
 
       def destination_database_url
-        config.rds.destination.database_url
+        config.rds.destination.database_url + require_ssl
       end
 
       def destination_database_name
@@ -69,6 +70,10 @@ module Migrator
 
       def destination_database_host
         config.rds.destination.database_host
+      end
+
+      def require_ssl
+        Helpers::REQUIRE_SSL
       end
 
       def components

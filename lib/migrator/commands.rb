@@ -43,7 +43,6 @@ module Migrator
           [
             "PGPASSWORD=#{destination_database_password}",
             'dropdb',
-            '--echo',
             "--host=#{destination_database_host}",
             "--username=#{destination_database_username}",
             destination_database_name
@@ -57,7 +56,6 @@ module Migrator
           [
             "PGPASSWORD=#{destination_database_password}",
             'createdb',
-            '--echo',
             "--encoding=utf-8",
             "--owner=#{destination_database_username}",
             "--host=#{destination_database_host}",

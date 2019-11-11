@@ -8,7 +8,7 @@ spec:
   containers:
   - name: cccd-migrator
     imagePullPolicy: Always
-    image: 754256621582.dkr.ecr.eu-west-2.amazonaws.com/laa-get-paid/cccd:migrator-latest
+    image: 754256621582.dkr.ecr.eu-west-2.amazonaws.com/laa-get-paid/cccd:set-me
     env:
       - name: AWS_REGION
         valueFrom:
